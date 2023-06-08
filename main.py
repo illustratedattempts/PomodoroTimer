@@ -6,6 +6,13 @@ import threading
 
 class PomoTimer:
     def __init__(self):
+        self.running_thread = None
+        self.semp_num = threading.Semaphore(1)  # Used to correctly synchronize the timer
+        self.thread_event = threading.Event()
+
+        self.reset_time = None  # Gives an error because we rely on having the start button first
+        self.num_time = None
+
         self.window = Tk()
         self._setup_main_window()
 
@@ -33,32 +40,54 @@ class PomoTimer:
         self.timer.pack()
 
         # Buttons
-        self.reset = ttk.Button(self.bottom_frame, text="RESET")
+        self.reset = ttk.Button(self.bottom_frame, text="RESET", command=self.reset_timer)
         self.reset.grid(row=0, column=0)
 
-        self.start = ttk.Button(self.bottom_frame, text="START", command=self.start_timer)
-        self.start.grid(row=0, column=1)
+        self.start_or_continue = ttk.Button(self.bottom_frame, text="START", command=self.start_or_continue_timer)
+        self.start_or_continue.grid(row=0, column=1)
 
-        self.pause = ttk.Button(self.bottom_frame, text="PAUSE")
+        self.pause = ttk.Button(self.bottom_frame, text="PAUSE", command=self.pause_timer)
         self.pause.grid(row=0, column=2)
 
     def reset_timer(self):
-        return
+        self.semp_num.acquire()
+        self.num_time = self.reset_time
+        self.timer.config(text=str(self.num_time))
+        self.start_or_continue.config(text="START")
+        self.thread_event.clear()
+        self.semp_num.release()
+        # print("Num Time:", self.num_time)
+        print("Does this still function?")
 
-    def start_timer(self):
-        set_time = self.timer.cget("text")
-        running_thread = threading.Thread(target=self.update_timer, args=(set_time,))
-        running_thread.start()
+    def start_or_continue_timer(self):
+        if self.running_thread:
+            self.thread_event.set()
+            print(self.thread_event.is_set())
+            self.start_or_continue.config(text="CONTINUE")
+        else:
+            set_time = self.timer.cget("text")
+            self.running_thread = threading.Thread(target=self.update_timer, args=(set_time,), daemon=True)
+            self.thread_event.set()
+            self.running_thread.start()
+            self.start_or_continue.config(text="CONTINUE")
 
     def update_timer(self, set_time):
-        num_time = int(set_time)
-        while num_time:
+        self.reset_time = int(set_time)
+        self.num_time = int(set_time)
+        while self.num_time:
             time.sleep(1)
-            num_time -= 1
-            self.timer.config(text=str(num_time))
+            self.thread_event.wait()
+            self.semp_num.acquire()
+            self.num_time -= 1
+            self.semp_num.release()
+            self.timer.config(text=str(self.num_time))
+            # print("Num Time:", self.num_time)
 
     def pause_timer(self):
-        return
+        self.thread_event.clear()
+        print(self.thread_event.is_set())
+        print("Timer should be paused")
+        self.start_or_continue.config(text="CONTINUE")
 
 
 if __name__ == "__main__":
