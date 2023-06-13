@@ -4,6 +4,24 @@ import time
 import threading
 
 
+def convertToTime(num_time):
+    num_minutes = num_time // 60
+    num_seconds = num_time % 60
+    minutes = str(num_minutes)
+    seconds = str(num_seconds)
+    if num_minutes < 10:
+        minutes = "0" + str(num_minutes)
+    if num_seconds < 10:
+        seconds = "0" + str(num_seconds)
+    return minutes + ":" + seconds
+
+
+def convertToNum(time_text):
+    minutes = int(time_text[:2])
+    seconds = int(time_text[3:])
+    return minutes*60 + seconds
+
+
 class PomoTimer:
     def __init__(self):
         self.running_thread = None
@@ -12,6 +30,7 @@ class PomoTimer:
 
         self.reset_time = None  # Gives an error because we rely on having the start button first
         self.num_time = None
+        self.default_time = "00:05"
 
         self.window = Tk()
         self._setup_main_window()
@@ -36,7 +55,7 @@ class PomoTimer:
         self.bottom_frame.grid(row=1, column=0)
 
         # Timer Label
-        self.timer = ttk.Label(self.top_frame, padding=5, text="43")
+        self.timer = ttk.Label(self.top_frame, padding=5, text=self.default_time)
         self.timer.pack()
 
         # Buttons
@@ -51,8 +70,8 @@ class PomoTimer:
 
     def reset_timer(self):
         self.semp_num.acquire()
-        self.num_time = self.reset_time
-        self.timer.config(text=str(self.num_time))
+        self.num_time = convertToNum(self.default_time)
+        self.timer.config(text=convertToTime(self.num_time))
         self.start_or_continue.config(text="START")
         self.thread_event.clear()
         self.semp_num.release()
@@ -61,11 +80,14 @@ class PomoTimer:
 
     def start_or_continue_timer(self):
         if self.running_thread:
+            if self.num_time <= 0:
+                self.num_time = convertToNum(self.default_time)
             self.thread_event.set()
             print(self.thread_event.is_set())
+            print(self.running_thread)
             self.start_or_continue.config(text="CONTINUE")
         else:
-            set_time = self.timer.cget("text")
+            set_time = convertToNum(self.default_time)
             self.running_thread = threading.Thread(target=self.update_timer, args=(set_time,), daemon=True)
             self.thread_event.set()
             self.running_thread.start()
@@ -80,7 +102,10 @@ class PomoTimer:
             self.semp_num.acquire()
             self.num_time -= 1
             self.semp_num.release()
-            self.timer.config(text=str(self.num_time))
+            self.timer.config(text=convertToTime(self.num_time))
+            if self.num_time <= 0:
+                self.thread_event.clear()
+                print(self.thread_event.is_set())
             # print("Num Time:", self.num_time)
 
     def pause_timer(self):
