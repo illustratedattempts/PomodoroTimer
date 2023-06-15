@@ -21,3 +21,24 @@ The **cget()** method where the parameters includes a string of the variable of 
 # RuntimeError: main thread is not in main loop
 
 Because the thread function actually has the state of the object the Tkinter GUI functionality moves to the added thread when exiting the foreground GUI.
+# Git Philosophy
+## Branching
+It has just come to my attention that all and any changes should have its own separate branch. <b>I will do so immediately.</b>
+## Committing
+It has also come to my attention that it is best practice to commit any changes often <b>even if they suck</b>. <b>I will do so immediately.</b>
+# Threads
+## Daemon Threads
+Threads that are expected to immediately terminate as soon as the program shuts down. Resources may not be properly released.
+
+## Thread Events
+"set" equals <b>True</b><br>
+"not set" equals <b>False</b><br>
+<b>wait() method</b> blocks the thread until the flag is <b>set</b> or <b>True</b><br>
+<b>clear() method</b> resets the flag to <b>False</b><br>
+<br>
+## Sleep Function
+<b>Using the time.sleep() function is a terrible idea</b><br>
+We live and learn I suppose! :)
+
+## Pause Timer
+Needed to implement the forced delay and pause detection before decrementing timer. This was due to the timer decrementing even though the pause button was pushed. Normal behavioural expectation dictates that users expect the pause button to immediately pause the functionality.
