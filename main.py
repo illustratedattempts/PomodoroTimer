@@ -1,12 +1,12 @@
 from tkinter import *
 from tkinter import ttk
-import time
-import threading
+from time import *
+from threading import *
 
 
-def convertToTime(num_time):
-    num_minutes = num_time // 60
-    num_seconds = num_time % 60
+def convertToTime(time_num):
+    num_minutes = time_num // 60
+    num_seconds = time_num % 60
     minutes = str(num_minutes)
     seconds = str(num_seconds)
     if num_minutes < 10:
@@ -19,18 +19,18 @@ def convertToTime(num_time):
 def convertToNum(time_text):
     minutes = int(time_text[:2])
     seconds = int(time_text[3:])
-    return minutes*60 + seconds
+    return minutes * 60 + seconds
 
 
 class PomoTimer:
     def __init__(self):
         self.running_thread = None
-        self.semp_num = threading.Semaphore(1)  # Used to correctly synchronize the timer
-        self.thread_event = threading.Event()
+        self.semp_num = Semaphore(1)  # Used to synchronize functions RUN & RESET
+        self.thread_event = Event()
+        # Gives an error because we rely on having the start button first
 
-        self.reset_time = None  # Gives an error because we rely on having the start button first
-        self.num_time = None
-        self.default_time = "00:05"
+        self.default_time = "00:10"
+        self.timer_num = convertToNum(self.default_time)
 
         self.window = Tk()
         self._setup_main_window()
@@ -59,60 +59,80 @@ class PomoTimer:
         self.timer.pack()
 
         # Buttons
-        self.reset = ttk.Button(self.bottom_frame, text="RESET", command=self.reset_timer)
-        self.reset.grid(row=0, column=0)
+        self.reset_btn = ttk.Button(self.bottom_frame, text="RESET", command=self.reset_timer)
+        self.reset_btn.grid(row=0, column=0)
 
-        self.start_or_continue = ttk.Button(self.bottom_frame, text="START", command=self.start_or_continue_timer)
-        self.start_or_continue.grid(row=0, column=1)
+        self.run_btn = ttk.Button(self.bottom_frame, text="RUN", command=self.run_timer)
+        self.run_btn.grid(row=0, column=1)
 
-        self.pause = ttk.Button(self.bottom_frame, text="PAUSE", command=self.pause_timer)
-        self.pause.grid(row=0, column=2)
+        self.pause_btn = ttk.Button(self.bottom_frame, text="PAUSE", command=self.pause_timer)
+        self.pause_btn.grid(row=0, column=2)
 
     def reset_timer(self):
         self.semp_num.acquire()
-        self.num_time = convertToNum(self.default_time)
-        self.timer.config(text=convertToTime(self.num_time))
-        self.start_or_continue.config(text="START")
-        self.thread_event.clear()
+
+        self.timer_num = convertToNum(self.default_time)
+        self.timer.config(text=self.default_time)
+
+        print("[RESET] Stopped Timer:", self.timer_num)
+
         self.semp_num.release()
-        # print("Num Time:", self.num_time)
-        print("Does this still function?")
+        self.thread_event.clear()
 
-    def start_or_continue_timer(self):
-        if self.running_thread:
-            if self.num_time <= 0:
-                self.num_time = convertToNum(self.default_time)
-            self.thread_event.set()
-            print(self.thread_event.is_set())
-            print(self.running_thread)
-            self.start_or_continue.config(text="CONTINUE")
-        else:
-            set_time = convertToNum(self.default_time)
-            self.running_thread = threading.Thread(target=self.update_timer, args=(set_time,), daemon=True)
-            self.thread_event.set()
+    def run_timer(self):
+        # Initialize Thread
+        if not self.running_thread:
+            self.running_thread = Thread(target=self.update_timer, daemon=True)
+            print("[RUN] Thread created! :L")
+            self.thread_event.set()  # By default, it is not set
             self.running_thread.start()
-            self.start_or_continue.config(text="CONTINUE")
+        else:
+            if self.timer_num <= 0:  # The Update Thread will not check until after decrementing timer
+                self.timer_num = convertToNum(self.default_time)
+                self.timer.config(text=self.default_time)
 
-    def update_timer(self, set_time):
-        self.reset_time = int(set_time)
-        self.num_time = int(set_time)
-        while self.num_time:
-            time.sleep(1)
+            self.thread_event.set()
+            print("[RUN] Letting the thread run again ;)")
+        if self.running_thread and self.thread_event.is_set():
+            print("[RUN] Thread is able to run! XD")
+
+        # Is it set by default? Let's find out! >:D
+        # self.thread_event.set()
+
+    def update_timer(self):
+        while True:  # Assumption: The thread SHOULD continue to exist
             self.thread_event.wait()
+
+            # An alternative to using sleep()
+            time_delay = 1
+            start_time = time()
+            while (time() - start_time) < time_delay:
+                continue
+
             self.semp_num.acquire()
-            self.num_time -= 1
-            self.semp_num.release()
-            self.timer.config(text=convertToTime(self.num_time))
-            if self.num_time <= 0:
+
+            # Addresses the case where the USER hits PAUSE just before as we are decrementing
+            print("[UPDATE THREAD] Is it set?", self.thread_event.is_set())
+            if not self.thread_event.is_set():  # To force another 1 sec delay after RUNNING again
+                print("[UPDATE THREAD] System detected a pause right before decrementing")
+                print("[UPDATE THREAD] Forcing an additional 1 sec delay")
+                self.semp_num.release()  # Emulates end of loop
+                continue
+
+            self.timer_num -= 1
+
+            print("[UPDATE THREAD] Running Timer:", self.timer_num)
+            self.timer.config(text=convertToTime(self.timer_num))
+
+            if self.timer_num <= 0:
+                print("[UPDATE THREAD] Timer has reached the end")
                 self.thread_event.clear()
-                print(self.thread_event.is_set())
-            # print("Num Time:", self.num_time)
+
+            self.semp_num.release()
 
     def pause_timer(self):
         self.thread_event.clear()
-        print(self.thread_event.is_set())
-        print("Timer should be paused")
-        self.start_or_continue.config(text="CONTINUE")
+        print("[PAUSE] Call for pause! :#")
 
 
 if __name__ == "__main__":
