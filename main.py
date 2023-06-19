@@ -61,7 +61,11 @@ class PomoTimer:
         self.timer = ttk.Label(self.top_frame, padding=5, text=self.default_time)
         self.timer.pack()
 
-        # Buttons
+        # Settings Button
+        self.setting_btn = ttk.Button(self.top_frame, text="SETTINGS")
+        self.setting_btn.pack()
+
+        # Manipulate Timer Buttons
         self.reset_btn = ttk.Button(self.bottom_frame, text="RESET", command=self.reset_timer)
         self.reset_btn.grid(row=0, column=0)
 
