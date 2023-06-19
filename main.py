@@ -40,11 +40,14 @@ class PomoTimer:
 
     def _setup_main_window(self):
         self.window.title("PomoTimer")
-        self.window.geometry("500x500+500+300")
+        self.window.geometry("300x200+500+300")
+
+        # Define Min Size behavior -- for now
+        self.window.minsize(230, 100)
 
         # Outer Frame
         self.outer = ttk.Frame(self.window, padding=10)
-        self.outer.grid()
+        self.outer.place(in_=self.window, anchor="c", relx=.5, rely=.5)
 
         # Top-Inner Frame
         self.top_frame = ttk.Frame(self.outer, padding=5)
