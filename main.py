@@ -1,4 +1,4 @@
-from tkinter import *
+import tkinter as tk
 from tkinter import ttk
 from time import *
 from threading import *
@@ -22,6 +22,20 @@ def convertToNum(time_text):
     return minutes * 60 + seconds
 
 
+class SettingsWindow(tk.Toplevel):
+    # Alive Variable attributes need to be implemented only when you want to close it a second way
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.config(width=300, height=200)
+        self.geometry("300x200+600+400")
+        self.title("Settings")
+        self.focus()
+
+        # grab_set() function invokes MODAL mode.
+        # Guarantees that the user can not create new Settings Windows
+        self.grab_set()
+
+
 class PomoTimer:
     def __init__(self):
         self.running_thread = None
@@ -32,8 +46,10 @@ class PomoTimer:
         self.default_time = "00:10"
         self.timer_num = convertToNum(self.default_time)
 
-        self.window = Tk()
+        self.window = tk.Tk()
         self._setup_main_window()
+
+        self.settings_window = None
 
     def run(self):
         self.window.mainloop()
@@ -62,7 +78,7 @@ class PomoTimer:
         self.timer.pack()
 
         # Settings Button
-        self.setting_btn = ttk.Button(self.top_frame, text="SETTINGS")
+        self.setting_btn = ttk.Button(self.top_frame, text="SETTINGS", command=self.open_settings)
         self.setting_btn.pack()
 
         # Manipulate Timer Buttons
@@ -74,6 +90,9 @@ class PomoTimer:
 
         self.pause_btn = ttk.Button(self.bottom_frame, text="PAUSE", command=self.pause_timer)
         self.pause_btn.grid(row=0, column=2)
+
+    def open_settings(self):
+        self.settings_window = SettingsWindow()
 
     def reset_timer(self):
         self.semp_num.acquire()
