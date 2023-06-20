@@ -123,7 +123,7 @@ class PomoTimer:
 
             self.semp_num.acquire()
 
-            # Addresses the case where the USER hits PAUSE just before as we are decrementing
+            # Addresses the case where the USER hits PAUSE or RESET just before decrementing
             print("[UPDATE THREAD] Is it set?", self.thread_event.is_set())
             if not self.thread_event.is_set():  # To force another 1 sec delay after RUNNING again
                 print("[UPDATE THREAD] System detected a pause right before decrementing")
