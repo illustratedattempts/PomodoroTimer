@@ -3,6 +3,8 @@ from tkinter import ttk
 from time import *
 from threading import *
 
+from pygame import mixer
+
 
 def convertToTime(time_num):
     num_minutes = time_num // 60
@@ -28,6 +30,9 @@ class PomoTimer:
         self.semp_num = Semaphore(1)  # Used to synchronize functions RUN & RESET
         self.thread_event = Event()
         # Gives an error because we rely on having the start button first
+
+        mixer.init()
+        self.alarm_sound = mixer.Sound("WakeUpAlarm.mp3")
 
         self.default_time = "00:10"
         self.timer_num = convertToNum(self.default_time)
@@ -134,6 +139,8 @@ class PomoTimer:
             if self.timer_num <= 0:
                 print("[UPDATE THREAD] Timer has reached the end")
                 self.thread_event.clear()
+                print("[UPDATE THREAD] Playing Alarm! :)")
+                self.alarm_sound.play()
 
             self.semp_num.release()
 
