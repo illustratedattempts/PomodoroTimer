@@ -24,15 +24,17 @@ def convertToNum(time_text):
 
 class SettingsWindow:
     # Alive Variable attributes need to be implemented only when you want to close it a second way
-    def __init__(self):
+    def __init__(self, default_time, change_func):
+        self.apply_changes = change_func
+
         self.settings = tk.Toplevel()
-        self._setup_settings_window()
+        self._setup_settings_window(default_time)
 
         # grab_set() function invokes MODAL mode.
         # Guarantees that the user can not create new Settings Windows
         self.settings.grab_set()
 
-    def _setup_settings_window(self):
+    def _setup_settings_window(self, initial_time):
         self.settings.config(width=300, height=200)
         self.settings.geometry("300x200+600+400")
         self.settings.title("Settings")
@@ -40,28 +42,73 @@ class SettingsWindow:
         self.pomo_label = ttk.Label(self.settings, text="Timer")
         self.pomo_label.pack()
 
-        self.timer_frame = ttk.Frame(self.settings, padding=5)
+        self.timer_frame = ttk.Frame(self.settings, padding=10)
         self.timer_frame.pack()
 
+        # For Combobox Values that represents digits of time
         self.timer_digit1 = ["0", "1", "2", "3", "4", "5"]
-        self.timer_digit2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        self.timer_digit2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
+        # Min Tens Digit
         self.chosen_min_dig1 = tk.IntVar()
-        self.min_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig1, state="readonly", values=self.timer_digit1)
-        self.min_digit1.current(0)
-        self.min_digit1.bind('<<ComboboxSelected>>', self.test)
+        self.min_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig1, state="readonly",
+                                       values=self.timer_digit1)
+        self.min_digit1.current(int(initial_time[0]))
+        self.min_digit1.bind('<<ComboboxSelected>>', self.debug_show)
         self.min_digit1.grid(row=0, column=0)
 
+        # Min Ones Digit
         self.chosen_min_dig2 = tk.IntVar()
-        self.min_digit2 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig2, state="readonly", values=self.timer_digit2)
-        self.min_digit2.current(0)
-        self.min_digit2.bind('<<ComboboxSelected>>', self.test)
+        self.min_digit2 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig2, state="readonly",
+                                       values=self.timer_digit2)
+        self.min_digit2.current(int(initial_time[1]))
+        self.min_digit2.bind('<<ComboboxSelected>>', self.debug_show)
         self.min_digit2.grid(row=0, column=1)
 
-    def test(self, event):
-        print("ComboBox1 Selected:", self.chosen_min_dig1.get())
-        print("ComboBox2 Selected:", self.chosen_min_dig2.get())
+        # Colon In Between
+        self.time_colons = ttk.Label(self.timer_frame, text=":")
+        self.time_colons.grid(row=0, column=2)
 
+        # Second Tens Digit
+        self.chosen_sec_dig1 = tk.IntVar()
+        self.sec_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_sec_dig1, state="readonly",
+                                       values=self.timer_digit1)
+        self.sec_digit1.current(int(initial_time[3]))
+        self.sec_digit1.bind('<<ComboboxSelected>>', self.debug_show)
+        self.sec_digit1.grid(row=0, column=3)
+
+        # Second Ones Digit
+        self.chosen_sec_dig2 = tk.IntVar()
+        self.sec_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_sec_dig2, state="readonly",
+                                       values=self.timer_digit2)
+        self.sec_digit1.current(int(initial_time[4]))
+        self.sec_digit1.bind('<<ComboboxSelected>>', self.debug_show)
+        self.sec_digit1.grid(row=0, column=4)
+
+        # Readjust Weight Values of Columns for Even-ness
+        self.timer_frame.grid_columnconfigure(0, weight=1)
+        self.timer_frame.grid_columnconfigure(1, weight=1)
+        # self.timer_frame.grid_columnconfigure(2, weight=1)
+        self.timer_frame.grid_columnconfigure(3, weight=1)
+        self.timer_frame.grid_columnconfigure(4, weight=1)
+
+        self.submit_btn = ttk.Button(self.settings, text="Submit Stuff", command=lambda: self.apply_changes(
+            str(self.chosen_min_dig1.get()) + str(self.chosen_min_dig2.get()) + ":" + str(self.chosen_sec_dig1.get()) +
+            str(self.chosen_sec_dig2.get())
+            )
+        )
+        self.submit_btn.pack()
+
+    def debug_show(self, event):
+        print("-----------------------------------------------------------")
+        print("Min Tens:", self.chosen_min_dig1.get())
+        print("Min Ones", self.chosen_min_dig2.get())
+        print("Second Tens:", self.chosen_sec_dig1.get())
+        print("Second Ones:", self.chosen_sec_dig2.get())
+        print(
+            str(self.chosen_min_dig1.get()) + str(self.chosen_min_dig2.get()) + ":" + str(self.chosen_sec_dig1.get()) +
+            str(self.chosen_sec_dig2.get())
+        )
 
 
 class PomoTimer:
@@ -120,8 +167,6 @@ class PomoTimer:
         self.pause_btn.grid(row=0, column=2)
 
     # Widget Callback Functions Below
-    def open_settings(self):
-        self.settings_window = SettingsWindow()
 
     def reset_timer(self):
         self.semp_num.acquire()
@@ -188,6 +233,16 @@ class PomoTimer:
     def pause_timer(self):
         self.thread_event.clear()
         print("[PAUSE] Call for pause! :#")
+
+    # Settings Window Below:
+    def open_settings(self):
+        self.settings_window = SettingsWindow(self.default_time, self.invoke_changes)
+
+    # For the Settings' Window
+    def invoke_changes(self, new_time):
+        print("From Main Window:", new_time)
+        self.timer.config(text=new_time)
+        print("[SETTINGS WINDOW] Timer Changed?!")
 
 
 if __name__ == "__main__":

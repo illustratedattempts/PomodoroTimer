@@ -60,3 +60,6 @@ There are keyword arguments called: textvariable, state, values<br>
 ## Widget Binding
 For Combobox:<br>
 >obj.bind('&lt;&lt;ComboboxSelected&gt;&gt;', function_name)
+
+## Changing the Timer
+For now it is my intention that when the timer is changed in any way, the timer will reset
