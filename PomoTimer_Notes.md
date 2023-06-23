@@ -42,3 +42,21 @@ We live and learn I suppose! :)
 
 ## Pause Timer
 Needed to implement the forced delay and pause detection before decrementing timer. This was due to the timer decrementing even though the pause button was pushed. Normal behavioural expectation dictates that users expect the pause button to immediately pause the functionality.
+
+# Settings Window
+
+## Tkinter Variables
+Apparently Tkinter has their own custom variables that they use to store values that are consistently modified in widgets.
+> var = tk.IntVar()<br>
+> var = tk.StringVar()<br>
+> ...
+
+### Combobox Widget
+There are keyword arguments called: textvariable, state, values<br>
+<b>textvariable:</b> Changes the value stored in this variable<br>
+<b>state:</b> Defines the state of the widget, the expected values are described as "normal", "readonly", or "disabled". There are also additional tkinter values<br>
+<b>values:</b> Stores the list of Combobox selection items
+
+## Widget Binding
+For Combobox:<br>
+>obj.bind('&lt;&lt;ComboboxSelected&gt;&gt;', function_name)

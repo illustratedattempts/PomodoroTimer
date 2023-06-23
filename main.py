@@ -55,10 +55,13 @@ class SettingsWindow:
         self.chosen_min_dig2 = tk.IntVar()
         self.min_digit2 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig2, state="readonly", values=self.timer_digit2)
         self.min_digit2.current(0)
+        self.min_digit2.bind('<<ComboboxSelected>>', self.test)
         self.min_digit2.grid(row=0, column=1)
 
     def test(self, event):
-        print(self.chosen_min_dig1.get())
+        print("ComboBox1 Selected:", self.chosen_min_dig1.get())
+        print("ComboBox2 Selected:", self.chosen_min_dig2.get())
+
 
 
 class PomoTimer:
