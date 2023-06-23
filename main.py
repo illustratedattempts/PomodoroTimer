@@ -22,18 +22,43 @@ def convertToNum(time_text):
     return minutes * 60 + seconds
 
 
-class SettingsWindow(tk.Toplevel):
+class SettingsWindow:
     # Alive Variable attributes need to be implemented only when you want to close it a second way
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.config(width=300, height=200)
-        self.geometry("300x200+600+400")
-        self.title("Settings")
-        self.focus()
+    def __init__(self):
+        self.settings = tk.Toplevel()
+        self._setup_settings_window()
 
         # grab_set() function invokes MODAL mode.
         # Guarantees that the user can not create new Settings Windows
-        self.grab_set()
+        self.settings.grab_set()
+
+    def _setup_settings_window(self):
+        self.settings.config(width=300, height=200)
+        self.settings.geometry("300x200+600+400")
+        self.settings.title("Settings")
+
+        self.pomo_label = ttk.Label(self.settings, text="Timer")
+        self.pomo_label.pack()
+
+        self.timer_frame = ttk.Frame(self.settings, padding=5)
+        self.timer_frame.pack()
+
+        self.timer_digit1 = ["0", "1", "2", "3", "4", "5"]
+        self.timer_digit2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        self.chosen_min_dig1 = tk.IntVar()
+        self.min_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig1, state="readonly", values=self.timer_digit1)
+        self.min_digit1.current(0)
+        self.min_digit1.bind('<<ComboboxSelected>>', self.test)
+        self.min_digit1.grid(row=0, column=0)
+
+        self.chosen_min_dig2 = tk.IntVar()
+        self.min_digit2 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig2, state="readonly", values=self.timer_digit2)
+        self.min_digit2.current(0)
+        self.min_digit2.grid(row=0, column=1)
+
+    def test(self, event):
+        print(self.chosen_min_dig1.get())
 
 
 class PomoTimer:
@@ -91,6 +116,7 @@ class PomoTimer:
         self.pause_btn = ttk.Button(self.bottom_frame, text="PAUSE", command=self.pause_timer)
         self.pause_btn.grid(row=0, column=2)
 
+    # Widget Callback Functions Below
     def open_settings(self):
         self.settings_window = SettingsWindow()
 
