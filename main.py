@@ -92,12 +92,15 @@ class SettingsWindow:
         self.timer_frame.grid_columnconfigure(3, weight=1)
         self.timer_frame.grid_columnconfigure(4, weight=1)
 
-        self.submit_btn = ttk.Button(self.settings, text="Submit Stuff", command=lambda: self.apply_changes(
+        self.submit_btn = ttk.Button(self.settings, text="Submit Stuff", command=self.settings_finished)
+        self.submit_btn.pack()
+
+    def settings_finished(self):
+        self.apply_changes(
             str(self.chosen_min_dig1.get()) + str(self.chosen_min_dig2.get()) + ":" + str(self.chosen_sec_dig1.get()) +
             str(self.chosen_sec_dig2.get())
-            )
         )
-        self.submit_btn.pack()
+        self.settings.destroy()
 
     def debug_show(self, event):
         print("-----------------------------------------------------------")
@@ -109,6 +112,7 @@ class SettingsWindow:
             str(self.chosen_min_dig1.get()) + str(self.chosen_min_dig2.get()) + ":" + str(self.chosen_sec_dig1.get()) +
             str(self.chosen_sec_dig2.get())
         )
+        print("-----------------------------------------------------------")
 
 
 class PomoTimer:
@@ -167,7 +171,6 @@ class PomoTimer:
         self.pause_btn.grid(row=0, column=2)
 
     # Widget Callback Functions Below
-
     def reset_timer(self):
         self.semp_num.acquire()
 
@@ -236,13 +239,18 @@ class PomoTimer:
 
     # Settings Window Below:
     def open_settings(self):
+        # Does this need an existence flag?
         self.settings_window = SettingsWindow(self.default_time, self.invoke_changes)
 
     # For the Settings' Window
+    # For now assume that the timer is NOT running
     def invoke_changes(self, new_time):
+        self.default_time = new_time
+        # self.timer_num = convertToNum(new_time)
+
         print("From Main Window:", new_time)
         self.timer.config(text=new_time)
-        print("[SETTINGS WINDOW] Timer Changed?!")
+        print("[SETTINGS WINDOW] Default Timer Changed?! (Text Only)")
 
 
 if __name__ == "__main__":
