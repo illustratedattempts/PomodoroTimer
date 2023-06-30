@@ -42,3 +42,6 @@ We live and learn I suppose! :)
 
 ## Pause Timer
 Needed to implement the forced delay and pause detection before decrementing timer. This was due to the timer decrementing even though the pause button was pushed. Normal behavioural expectation dictates that users expect the pause button to immediately pause the functionality.
+
+## Changing Timer Types
+Having it reset requires it to grab the Semaphore which locks the whole application when another method requires the Semaphore to manipulate the timer variable.
