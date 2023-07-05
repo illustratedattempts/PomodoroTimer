@@ -218,13 +218,22 @@ class PomoTimer:
 
     # For the Settings' Window
     # For now assume that the timer is NOT running
-    def invoke_changes(self, new_time):
+    def invoke_changes(self, new_pomo_timer, new_lbreak_timer, new_sbreak_timer):
         # self.default_time = new_time
         # self.timer_num = convertToNum(new_time)
+        print("[SETTINGS -> MAIN] Timer Settings has Invoked Changes to Timer Types Values")
+        self.pomo_time = new_pomo_timer
+        self.lbreak_time = new_lbreak_timer
+        self.sbreak_time = new_sbreak_timer
 
-        print("From Main Window:", new_time)
-        self.timer.config(text=new_time)
-        print("[SETTINGS] Default Timer Changed?! (Text Only)")
+        # NOTE: (For future self) If the update timer thread is running, this function may cause a deadlock.
+        # For now, with the assumed behavior that the timer is not running, manipulating the timer should hopefully
+        # not be catastrophic
+
+        # |                                |
+        # |                                |
+        # V THIS NEEDS TO BE CHANGED LATER V
+        self.manip_timer(self.curr_timer_type)
 
     # Assumes that calling block will be surrounded by semaphores...scary
     def manip_timer(self, time_type="Pomodoro"):

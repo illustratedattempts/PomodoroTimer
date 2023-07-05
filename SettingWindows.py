@@ -185,9 +185,16 @@ class SettingsWindow:
         self.submit_btn.pack()
 
     def settings_finished(self):
+        print("[SETTINGS] Submitting New Values")
         build_pomo_timer = str(self.pomo_chosen_min_dig1.get()) + str(self.pomo_chosen_min_dig2.get()) + ":" + \
                            str(self.pomo_chosen_sec_dig1.get()) + str(self.pomo_chosen_sec_dig2.get())
-        self.apply_changes()
+        build_lbreak_timer = str(self.lbreak_chosen_min_dig1.get()) + str(self.lbreak_chosen_min_dig2.get()) + ":" + \
+                             str(self.lbreak_chosen_sec_dig1.get()) + str(self.lbreak_chosen_sec_dig2.get())
+        build_sbreak_timer = str(self.sbreak_chosen_min_dig1.get()) + str(self.sbreak_chosen_min_dig2.get()) + ":" + \
+                             str(self.sbreak_chosen_sec_dig1.get()) + str(self.sbreak_chosen_sec_dig2.get())
+
+        self.apply_changes(build_pomo_timer, build_lbreak_timer, build_sbreak_timer)
+
         print("[SETTINGS] Destroying Window...")
         SettingsWindow.window_exist = False
         self.settings.destroy()
@@ -219,15 +226,14 @@ class SettingsWindow:
         print("--------------------------------------------------------------------------------------")
 
     def sbreak_debug_show(self, event):
-        print("")
         print("--------------------------[SETTINGS] SHORT BREAK TIMER---------------------------------")
-        print("Min Tens:", self.lbreak_chosen_min_dig1.get())
-        print("Min Ones", self.lbreak_chosen_min_dig2.get())
-        print("Second Tens:", self.lbreak_chosen_sec_dig1.get())
-        print("Second Ones:", self.lbreak_chosen_sec_dig2.get())
+        print("Min Tens:", self.sbreak_chosen_min_dig1.get())
+        print("Min Ones", self.sbreak_chosen_min_dig2.get())
+        print("Second Tens:", self.sbreak_chosen_sec_dig1.get())
+        print("Second Ones:", self.sbreak_chosen_sec_dig2.get())
         print(
-            str(self.lbreak_chosen_min_dig1.get()) + str(self.lbreak_chosen_min_dig2.get()) + ":" +
-            str(self.lbreak_chosen_sec_dig1.get()) +
-            str(self.lbreak_chosen_sec_dig2.get())
+            str(self.sbreak_chosen_min_dig1.get()) + str(self.sbreak_chosen_min_dig2.get()) + ":" +
+            str(self.sbreak_chosen_sec_dig1.get()) +
+            str(self.sbreak_chosen_sec_dig2.get())
         )
         print("----------------------------------------------------------------------------------------")
