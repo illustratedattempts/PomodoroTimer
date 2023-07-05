@@ -1,4 +1,4 @@
-[comment]: # (Ctrl+Shift+V for Markdown Preview)
+[comment]: (Ctrl+Shift+V for Markdown Preview)
 
 # Window Properties
 
@@ -16,7 +16,7 @@ For Example:<br>
 
 # Grab Widget Variables
 
-The **cget()** method where the parameters includes a string of the variable of the widget.
+The **cget()** method where the parameters include a string of the variable of the widget.
 
 # RuntimeError: main thread is not in main loop
 
@@ -63,7 +63,7 @@ For Combobox:<br>
 >obj.bind('&lt;&lt;ComboboxSelected&gt;&gt;', function_name)
 
 ## Changing the Timer
-For now it is my intention that when the timer is changed in any way, the timer will reset
+For now, it is my intention that when the timer is changed in any way, the timer will reset
 
 ## Changing Timer Types
 Having it reset requires it to grab the Semaphore which locks the whole application when another method requires the Semaphore to manipulate the timer variable.

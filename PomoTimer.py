@@ -1,7 +1,10 @@
+import sys
 import tkinter as tk
 from tkinter import ttk
 from time import *
 from threading import *
+
+from SettingWindows import SettingsWindow
 
 
 def convertToTime(time_num):
@@ -22,100 +25,6 @@ def convertToNum(time_text):
     return minutes * 60 + seconds
 
 
-class SettingsWindow:
-    # Alive Variable attributes need to be implemented only when you want to close it a second way
-    # Alive Variable attributes: Changing the timer while it is running?
-    def __init__(self, default_time, change_func):
-        self.apply_changes = change_func
-
-        self.settings = tk.Toplevel()
-        self._setup_settings_win(default_time)
-
-        # grab_set() function invokes MODAL mode.
-        # Guarantees that the user can not create new Settings Windows
-        self.settings.grab_set()
-
-    def _setup_settings_win(self, initial_time):
-        self.settings.config(width=300, height=200)
-        self.settings.geometry("300x200+600+400")
-        self.settings.title("Settings")
-
-        self.pomo_label = ttk.Label(self.settings, text="Pomodoro Timer")
-        self.pomo_label.pack()
-
-        self.timer_frame = ttk.Frame(self.settings, padding=10)
-        self.timer_frame.pack()
-
-        # For Combobox Values that represents digits of time
-        self.timer_digit1 = ["0", "1", "2", "3", "4", "5"]
-        self.timer_digit2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-
-        # Min Tens Digit
-        self.chosen_min_dig1 = tk.IntVar()
-        self.min_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig1, state="readonly",
-                                       values=self.timer_digit1)
-        self.min_digit1.current(int(initial_time[0]))
-        self.min_digit1.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.min_digit1.grid(row=0, column=0)
-
-        # Min Ones Digit
-        self.chosen_min_dig2 = tk.IntVar()
-        self.min_digit2 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_min_dig2, state="readonly",
-                                       values=self.timer_digit2)
-        self.min_digit2.current(int(initial_time[1]))
-        self.min_digit2.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.min_digit2.grid(row=0, column=1)
-
-        # Colon In Between
-        self.time_colons = ttk.Label(self.timer_frame, text=":")
-        self.time_colons.grid(row=0, column=2)
-
-        # Second Tens Digit
-        self.chosen_sec_dig1 = tk.IntVar()
-        self.sec_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_sec_dig1, state="readonly",
-                                       values=self.timer_digit1)
-        self.sec_digit1.current(int(initial_time[3]))
-        self.sec_digit1.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.sec_digit1.grid(row=0, column=3)
-
-        # Second Ones Digit
-        self.chosen_sec_dig2 = tk.IntVar()
-        self.sec_digit1 = ttk.Combobox(self.timer_frame, textvariable=self.chosen_sec_dig2, state="readonly",
-                                       values=self.timer_digit2)
-        self.sec_digit1.current(int(initial_time[4]))
-        self.sec_digit1.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.sec_digit1.grid(row=0, column=4)
-
-        # Readjust Weight Values of Columns for Even-ness
-        self.timer_frame.grid_columnconfigure(0, weight=1)
-        self.timer_frame.grid_columnconfigure(1, weight=1)
-        # self.timer_frame.grid_columnconfigure(2, weight=1)
-        self.timer_frame.grid_columnconfigure(3, weight=1)
-        self.timer_frame.grid_columnconfigure(4, weight=1)
-
-        self.submit_btn = ttk.Button(self.settings, text="Submit Stuff", command=self.settings_finished)
-        self.submit_btn.pack()
-
-    def settings_finished(self):
-        self.apply_changes(
-            str(self.chosen_min_dig1.get()) + str(self.chosen_min_dig2.get()) + ":" + str(self.chosen_sec_dig1.get()) +
-            str(self.chosen_sec_dig2.get())
-        )
-        self.settings.destroy()
-
-    def pomo_debug_show(self, event):
-        print("--------------------------POMODORO TIMER---------------------------------")
-        print("Min Tens:", self.chosen_min_dig1.get())
-        print("Min Ones", self.chosen_min_dig2.get())
-        print("Second Tens:", self.chosen_sec_dig1.get())
-        print("Second Ones:", self.chosen_sec_dig2.get())
-        print(
-            str(self.chosen_min_dig1.get()) + str(self.chosen_min_dig2.get()) + ":" + str(self.chosen_sec_dig1.get()) +
-            str(self.chosen_sec_dig2.get())
-        )
-        print("-------------------------------------------------------------------------")
-
-
 class PomoTimer:
     def __init__(self):
         self.running_thread = None
@@ -128,7 +37,7 @@ class PomoTimer:
         self.sbreak_time = "00:05"
 
         self.timer_num = convertToNum(self.pomo_time)
-        self.timer_type = "Pomodoro"  # May not be useful -- only for labeling
+        self.curr_timer_type = "Pomodoro"  # May not be useful -- only for labeling
         # Pomodoro, LongBreak, ShortBreak
 
         self.window = tk.Tk()
@@ -148,7 +57,7 @@ class PomoTimer:
 
         # Outer Frame
         self.outer = ttk.Frame(self.window, padding=10)
-        self.outer.place(in_=self.window, anchor="c", relx=.5, rely=.5)
+        self.outer.place(in_=self.window, anchor="center", relx=.5, rely=.5)
 
         # Top-Inner Frame
         self.top_frame = ttk.Frame(self.outer, padding=5)
@@ -197,11 +106,11 @@ class PomoTimer:
     # The Semaphore is assumed to be released -- potential deadlock could happen here
     # Might need a Semaphore for adjusting timer type
     def diff_timer_pomo(self):
-        if self.timer_type != "Pomodoro":
+        if self.curr_timer_type != "Pomodoro":
             print("[CHANGE TYPE] Type changed to: Pomodoro")
             self.thread_event.clear()
 
-            self.timer_type = "Pomodoro"
+            self.curr_timer_type = "Pomodoro"
 
             self.semp_num.acquire()
             self.manip_timer(time_type="Pomodoro")
@@ -210,11 +119,11 @@ class PomoTimer:
             print("[CHANGE TYPE] Attempted to change to POMODORO but already in state")
 
     def diff_timer_long(self):
-        if self.timer_type != "Long Break":
+        if self.curr_timer_type != "Long Break":
             print("[CHANGE TYPE] Type changed to: Long Break")
             self.thread_event.clear()
 
-            self.timer_type = "Long Break"
+            self.curr_timer_type = "Long Break"
 
             self.semp_num.acquire()
             self.manip_timer(time_type="Long Break")
@@ -223,11 +132,11 @@ class PomoTimer:
             print("[CHANGE TYPE] Attempted to change to LONG BREAK but already in state")
 
     def diff_timer_short(self):
-        if self.timer_type != "Short Break":
+        if self.curr_timer_type != "Short Break":
             print("[CHANGE TYPE] Type changed to: Short Break")
             self.thread_event.clear()
 
-            self.timer_type = "Short Break"
+            self.curr_timer_type = "Short Break"
 
             self.semp_num.acquire()
             self.manip_timer(time_type="Short Break")
@@ -237,7 +146,7 @@ class PomoTimer:
 
     def reset_timer(self):
         self.semp_num.acquire()
-        self.manip_timer(time_type=self.timer_type)
+        self.manip_timer(time_type=self.curr_timer_type)
 
         print("[RESET] Stopped Timer:", self.timer_num)
 
@@ -253,7 +162,7 @@ class PomoTimer:
             self.running_thread.start()
         else:
             if self.timer_num <= 0:  # The Update Thread will not check until after decrementing timer
-                self.manip_timer(time_type=self.timer_type)
+                self.manip_timer(time_type=self.curr_timer_type)
 
             self.thread_event.set()
             print("[RUN] Letting the thread run again ;)")
@@ -297,14 +206,20 @@ class PomoTimer:
 
     # Settings Window Below:
     def open_settings(self):
-        # Does this need an existence flag?
-        print("[SETTINGS] Window Open Invoked")
-        self.settings_window = SettingsWindow(self.pomo_time, self.invoke_changes)
+        print("[SETTINGS] Invoking Window Opening")
+        # Just in case the modal focus mode fails
+        if not SettingsWindow.window_exist:
+            self.settings_window = SettingsWindow(pomo_time=self.pomo_time, lbreak_time=self.lbreak_time,
+                                                  sbreak_time=self.sbreak_time, change_func=self.invoke_changes)
+
+            print("[SETTINGS] New Window Opened")
+        else:
+            print("[SETTINGS] Window Already Exists, Only One Window May Exist")
 
     # For the Settings' Window
     # For now assume that the timer is NOT running
     def invoke_changes(self, new_time):
-        #self.default_time = new_time
+        # self.default_time = new_time
         # self.timer_num = convertToNum(new_time)
 
         print("From Main Window:", new_time)
@@ -327,6 +242,11 @@ class PomoTimer:
             return self.sbreak_time
 
 
-if __name__ == "__main__":
+def main():
     app = PomoTimer()
     app.run()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
