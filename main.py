@@ -122,13 +122,19 @@ class PomoTimer:
         self.thread_event = Event()
         # Gives an error because we rely on having the start button first
 
-        self.default_time = "00:10"
-        self.timer_num = convertToNum(self.default_time)
+        self.pomo_time = "00:25"
+        self.lbreak_time = "00:15"
+        self.sbreak_time = "00:05"
+
+        self.timer_num = convertToNum(self.pomo_time)
+        self.timer_type = "Pomodoro"  # May not be useful -- only for labeling
+        # Pomodoro, LongBreak, ShortBreak
 
         self.window = tk.Tk()
         self._setup_main_window()
 
         self.settings_window = None
+
 
     def run(self):
         self.window.mainloop()
@@ -148,16 +154,34 @@ class PomoTimer:
         self.top_frame = ttk.Frame(self.outer, padding=5)
         self.top_frame.grid(row=0, column=0)
 
+        # Middle-Inner Frame
+        self.middle_frame = ttk.Frame(self.outer, padding=5)
+        self.middle_frame.grid(row=1, column=0)
+
         # Bottom-Inner Frame
         self.bottom_frame = ttk.Frame(self.outer, padding=5)
-        self.bottom_frame.grid(row=1, column=0)
+        self.bottom_frame.grid(row=2, column=0)
+
+        # Different Timer Type Buttons
+        self.pomo_btn = ttk.Button(self.top_frame, text="POMODORO", command=self.diff_timer_pomo)
+        self.pomo_btn.grid(row=0, column=0)
+
+        self.long_break_btn = ttk.Button(self.top_frame, text="LONG BREAK", command=self.diff_timer_long)
+        self.long_break_btn.grid(row=0, column=1)
+
+        self.short_break_btn = ttk.Button(self.top_frame, text="SHORT BREAK", command=self.diff_timer_short)
+        self.short_break_btn.grid(row=0, column=2)
 
         # Timer Label
-        self.timer = ttk.Label(self.top_frame, padding=5, text=self.default_time)
+        self.timer = ttk.Label(self.middle_frame, padding=5, text=self.pomo_time)
         self.timer.pack()
 
         # Settings Button
+
         self.setting_btn = ttk.Button(self.top_frame, text="SETTINGS", command=self.open_settings)
+        
+        self.setting_btn = ttk.Button(self.middle_frame, text="SETTINGS")
+
         self.setting_btn.pack()
 
         # Manipulate Timer Buttons
@@ -170,12 +194,55 @@ class PomoTimer:
         self.pause_btn = ttk.Button(self.bottom_frame, text="PAUSE", command=self.pause_timer)
         self.pause_btn.grid(row=0, column=2)
 
+
     # Widget Callback Functions Below
+    
+    # Changing Timer Type Functions
+    # These are intended to pause execution and then change the timer
+    # The Semaphore is assumed to be released -- potential deadlock could happen here
+    # Might need a Semaphore for adjusting timer type
+    def diff_timer_pomo(self):
+        if self.timer_type != "Pomodoro":
+            print("[CHANGE TYPE] Type changed to: Pomodoro")
+            self.thread_event.clear()
+
+            self.timer_type = "Pomodoro"
+
+            self.semp_num.acquire()
+            self.manip_timer(time_type="Pomodoro")
+            self.semp_num.release()
+        else:
+            print("[CHANGE TYPE] Attempted to change to POMODORO but already in state")
+
+    def diff_timer_long(self):
+        if self.timer_type != "Long Break":
+            print("[CHANGE TYPE] Type changed to: Long Break")
+            self.thread_event.clear()
+
+            self.timer_type = "Long Break"
+
+            self.semp_num.acquire()
+            self.manip_timer(time_type="Long Break")
+            self.semp_num.release()
+        else:
+            print("[CHANGE TYPE] Attempted to change to LONG BREAK but already in state")
+
+    def diff_timer_short(self):
+        if self.timer_type != "Short Break":
+            print("[CHANGE TYPE] Type changed to: Short Break")
+            self.thread_event.clear()
+
+            self.timer_type = "Short Break"
+
+            self.semp_num.acquire()
+            self.manip_timer(time_type="Short Break")
+            self.semp_num.release()
+        else:
+            print("[CHANGE TYPE] Attempted to change to SHORT BREAK but already in state")
+
     def reset_timer(self):
         self.semp_num.acquire()
-
-        self.timer_num = convertToNum(self.default_time)
-        self.timer.config(text=self.default_time)
+        self.manip_timer(time_type=self.timer_type)
 
         print("[RESET] Stopped Timer:", self.timer_num)
 
@@ -191,8 +258,7 @@ class PomoTimer:
             self.running_thread.start()
         else:
             if self.timer_num <= 0:  # The Update Thread will not check until after decrementing timer
-                self.timer_num = convertToNum(self.default_time)
-                self.timer.config(text=self.default_time)
+                self.manip_timer(time_type=self.timer_type)
 
             self.thread_event.set()
             print("[RUN] Letting the thread run again ;)")
@@ -218,7 +284,7 @@ class PomoTimer:
             print("[UPDATE THREAD] Is it set?", self.thread_event.is_set())
             if not self.thread_event.is_set():  # To force another 1 sec delay after RUNNING again
                 print("[UPDATE THREAD] System detected a pause right before decrementing")
-                print("[UPDATE THREAD] Forcing an additional 1 sec delay")
+                print("[UPDATE THREAD] Forcing an additional 1 sec delay, if applicable")
                 self.semp_num.release()  # Emulates end of loop
                 continue
 
@@ -251,6 +317,21 @@ class PomoTimer:
         print("From Main Window:", new_time)
         self.timer.config(text=new_time)
         print("[SETTINGS WINDOW] Default Timer Changed?! (Text Only)")
+        
+    # Assumes that calling block will be surrounded by semaphores...scary
+    def manip_timer(self, time_type="Pomodoro"):
+        if time_type == "Pomodoro":
+            self.timer_num = convertToNum(self.pomo_time)
+            self.timer.config(text=self.pomo_time)
+            return self.pomo_time
+        elif time_type == "Long Break":
+            self.timer_num = convertToNum(self.lbreak_time)
+            self.timer.config(text=self.lbreak_time)
+            return self.lbreak_time
+        elif time_type == "Short Break":
+            self.timer_num = convertToNum(self.sbreak_time)
+            self.timer.config(text=self.sbreak_time)
+            return self.sbreak_time
 
 
 if __name__ == "__main__":
