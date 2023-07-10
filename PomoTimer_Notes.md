@@ -68,3 +68,6 @@ For now, it is my intention that when the timer is changed in any way, the timer
 ## Changing Timer Types
 Having it reset requires it to grab the Semaphore which locks the whole application when another method requires the Semaphore to manipulate the timer variable.
 
+# Conclusion
+I have learned a lot from this project. It was a lot of fun building this. However, I think I am going to switch to QT C++ since this application has very terrible performance.<br>
+It may be because of all the print statements or the binding of keys to Combo boxes or a combination of both.   

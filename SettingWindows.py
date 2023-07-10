@@ -181,7 +181,7 @@ class SettingsWindow:
         self.sbreak_timer_frame.grid_columnconfigure(4, weight=1)
         # -----------------------------------------------------------------------------------------------------
 
-        self.submit_btn = ttk.Button(self.settings, text="Submit Stuff", command=self.settings_finished)
+        self.submit_btn = ttk.Button(self.settings, text="Submit Changes", command=self.settings_finished)
         self.submit_btn.pack()
 
     def settings_finished(self):

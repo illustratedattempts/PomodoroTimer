@@ -28,13 +28,15 @@ def convertToNum(time_text):
 class PomoTimer:
     def __init__(self):
         self.running_thread = None
-        self.semp_num = Semaphore(1)  # Used to synchronize functions RUN & RESET
+        self.semp_time = Semaphore(1)  # Used to synchronize functions that manipulate the timer
         self.thread_event = Event()
         # Gives an error because we rely on having the start button first
 
         self.pomo_time = "00:25"
         self.lbreak_time = "00:15"
         self.sbreak_time = "00:05"
+
+        self.elapsed_time = 0
 
         self.timer_num = convertToNum(self.pomo_time)
         self.curr_timer_type = "Pomodoro"  # May not be useful -- only for labeling
@@ -112,9 +114,9 @@ class PomoTimer:
 
             self.curr_timer_type = "Pomodoro"
 
-            self.semp_num.acquire()
+            self.semp_time.acquire()
             self.manip_timer(time_type="Pomodoro")
-            self.semp_num.release()
+            self.semp_time.release()
         else:
             print("[CHANGE TYPE] Attempted to change to POMODORO but already in state")
 
@@ -125,9 +127,9 @@ class PomoTimer:
 
             self.curr_timer_type = "Long Break"
 
-            self.semp_num.acquire()
+            self.semp_time.acquire()
             self.manip_timer(time_type="Long Break")
-            self.semp_num.release()
+            self.semp_time.release()
         else:
             print("[CHANGE TYPE] Attempted to change to LONG BREAK but already in state")
 
@@ -138,19 +140,20 @@ class PomoTimer:
 
             self.curr_timer_type = "Short Break"
 
-            self.semp_num.acquire()
+            self.semp_time.acquire()
             self.manip_timer(time_type="Short Break")
-            self.semp_num.release()
+            self.semp_time.release()
         else:
             print("[CHANGE TYPE] Attempted to change to SHORT BREAK but already in state")
 
     def reset_timer(self):
-        self.semp_num.acquire()
-        self.manip_timer(time_type=self.curr_timer_type)
+        self.semp_time.acquire()
 
+        self.elapsed_time = 0
+        self.manip_timer(time_type=self.curr_timer_type)
         print("[RESET] Stopped Timer:", self.timer_num)
 
-        self.semp_num.release()
+        self.semp_time.release()
         self.thread_event.clear()
 
     def run_timer(self):
@@ -179,16 +182,17 @@ class PomoTimer:
             while (time() - start_time) < time_delay:
                 continue
 
-            self.semp_num.acquire()
+            self.semp_time.acquire()
 
             # Addresses the case where the USER hits PAUSE just before as we are decrementing
             print("[UPDATE THREAD] Is it set?", self.thread_event.is_set())
             if not self.thread_event.is_set():  # To force another 1 sec delay after RUNNING again
                 print("[UPDATE THREAD] System detected a pause right before decrementing")
                 print("[UPDATE THREAD] Forcing an additional 1 sec delay (if applicable)")
-                self.semp_num.release()  # Emulates end of loop
+                self.semp_time.release()  # Emulates end of loop
                 continue
 
+            self.elapsed_time = self.elapsed_time + 1
             self.timer_num -= 1
 
             print("[UPDATE THREAD] Running Timer:", self.timer_num)
@@ -196,9 +200,10 @@ class PomoTimer:
 
             if self.timer_num <= 0:
                 print("[UPDATE THREAD] Timer has reached the end")
+                self.elapsed_time = 0
                 self.thread_event.clear()
 
-            self.semp_num.release()
+            self.semp_time.release()
 
     def pause_timer(self):
         self.thread_event.clear()
@@ -218,37 +223,67 @@ class PomoTimer:
 
     # For the Settings' Window
     # For now assume that the timer is NOT running
-    def invoke_changes(self, new_pomo_timer, new_lbreak_timer, new_sbreak_timer):
+    def invoke_changes(self, new_pomo_time, new_lbreak_time, new_sbreak_time):
         # self.default_time = new_time
         # self.timer_num = convertToNum(new_time)
         print("[SETTINGS -> MAIN] Timer Settings has Invoked Changes to Timer Types Values")
-        self.pomo_time = new_pomo_timer
-        self.lbreak_time = new_lbreak_timer
-        self.sbreak_time = new_sbreak_timer
 
-        # NOTE: (For future self) If the update timer thread is running, this function may cause a deadlock.
-        # For now, with the assumed behavior that the timer is not running, manipulating the timer should hopefully
-        # not be catastrophic
+        any_curr_changes = False
 
-        # |                                |
-        # |                                |
-        # V THIS NEEDS TO BE CHANGED LATER V
-        self.manip_timer(self.curr_timer_type)
+        # Makes sure that only NEW times get changed and that we call manip timer only when it's the current timer
+        if not self.pomo_time == new_pomo_time:
+            if self.curr_timer_type == "Pomodoro":
+                any_curr_changes = True
+            self.pomo_time = new_pomo_time
+
+        if not self.lbreak_time == new_lbreak_time:
+            if self.curr_timer_type == "Long Break":
+                any_curr_changes = True
+            self.lbreak_time = new_lbreak_time
+
+        if not self.sbreak_time == new_sbreak_time:
+            if self.curr_timer_type == "Short Break":
+                any_curr_changes = True
+            self.sbreak_time = new_sbreak_time
+
+        # Pushes any relevant changes to the GUI thread
+        if any_curr_changes:
+            self.semp_time.acquire()
+            self.manip_timer(self.curr_timer_type)
+            self.semp_time.release()
 
     # Assumes that calling block will be surrounded by semaphores...scary
+    # It may be that when the elapsed time changes, that if it greater than the time than it will be 0:00 or less than 0 which should not happen
+    # Solution: Use the flag and set the time to 0:00
     def manip_timer(self, time_type="Pomodoro"):
         if time_type == "Pomodoro":
-            self.timer_num = convertToNum(self.pomo_time)
-            self.timer.config(text=self.pomo_time)
-            return self.pomo_time
+            self.timer_num = convertToNum(self.pomo_time) - self.elapsed_time
+            print("[MANIP] Elapsed Time:", self.elapsed_time)
+            if self.timer_num <= 0:
+                print("[UPDATE THREAD] Timer has reached the end")
+                self.thread_event.clear()
+                self.elapsed_time = 0
+                self.timer.config(text=convertToTime(0))
+            else:
+                self.timer.config(text=convertToTime(self.timer_num))
         elif time_type == "Long Break":
-            self.timer_num = convertToNum(self.lbreak_time)
-            self.timer.config(text=self.lbreak_time)
-            return self.lbreak_time
+            self.timer_num = convertToNum(self.lbreak_time) - self.elapsed_time
+            if self.timer_num <= 0:
+                print("[UPDATE THREAD] Timer has reached the end")
+                self.thread_event.clear()
+                self.elapsed_time = 0
+                self.timer.config(text=convertToTime(0))
+            else:
+                self.timer.config(text=convertToTime(self.timer_num))
         elif time_type == "Short Break":
-            self.timer_num = convertToNum(self.sbreak_time)
-            self.timer.config(text=self.sbreak_time)
-            return self.sbreak_time
+            self.timer_num = convertToNum(self.sbreak_time) - self.elapsed_time
+            if self.timer_num <= 0:
+                print("[UPDATE THREAD] Timer has reached the end")
+                self.thread_event.clear()
+                self.elapsed_time = 0
+                self.timer.config(text=convertToTime(0))
+            else:
+                self.timer.config(text=convertToTime(self.timer_num))
 
 
 def main():
