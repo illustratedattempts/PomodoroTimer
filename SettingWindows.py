@@ -2,6 +2,11 @@ import tkinter as tk
 from tkinter import ttk
 
 
+def eval_2digs(num):
+    if num < 10:
+        return "0" + str(num)
+    return str(num)
+
 class SettingsWindow:
     window_exist = False
 
@@ -36,166 +41,84 @@ class SettingsWindow:
         self.pomo_timer_frame = ttk.Frame(self.settings, padding=10)
         self.pomo_timer_frame.pack()
 
-        self.lbreak_label = ttk.Label(self.settings, text="Long Break Timer")
-        self.lbreak_label.pack()
-        self.lbreak_timer_frame = ttk.Frame(self.settings, padding=10)
-        self.lbreak_timer_frame.pack()
+        self.long_label = ttk.Label(self.settings, text="Long Break Timer")
+        self.long_label.pack()
+        self.long_frame = ttk.Frame(self.settings, padding=10)
+        self.long_frame.pack()
 
-        self.sbreak_label = ttk.Label(self.settings, text="Short Break Timer")
-        self.sbreak_label.pack()
-        self.sbreak_timer_frame = ttk.Frame(self.settings, padding=10)
-        self.sbreak_timer_frame.pack()
+        self.short_label = ttk.Label(self.settings, text="Short Break Timer")
+        self.short_label.pack()
+        self.short_frame = ttk.Frame(self.settings, padding=10)
+        self.short_frame.pack()
 
         # For Combobox Values that represents digits of time
         self.timer_digit1 = ["0", "1", "2", "3", "4", "5"]
         self.timer_digit2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-        # Pomodoro Timer ComboBoxes
+        # Pomodoro Timer
         # -----------------------------------------------------------------------------------------------------
-        # Min Tens Digit
-        self.pomo_chosen_min_dig1 = tk.IntVar()
-        self.pomo_min_digit1 = ttk.Combobox(self.pomo_timer_frame, textvariable=self.pomo_chosen_min_dig1,
-                                            state="readonly",
-                                            values=self.timer_digit1)
-        self.pomo_min_digit1.current(int(pomo_time[0]))
-        self.pomo_min_digit1.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.pomo_min_digit1.grid(row=0, column=0)
-        # Min Ones Digit
-        self.pomo_chosen_min_dig2 = tk.IntVar()
-        self.pomo_min_digit2 = ttk.Combobox(self.pomo_timer_frame, textvariable=self.pomo_chosen_min_dig2,
-                                            state="readonly",
-                                            values=self.timer_digit2)
-        self.pomo_min_digit2.current(int(pomo_time[1]))
-        self.pomo_min_digit2.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.pomo_min_digit2.grid(row=0, column=1)
-        # Colon In Between
-        self.pomo_time_colons = ttk.Label(self.pomo_timer_frame, text=":")
-        self.pomo_time_colons.grid(row=0, column=2)
-        # Second Tens Digit
-        self.pomo_chosen_sec_dig1 = tk.IntVar()
-        self.pomo_sec_digit1 = ttk.Combobox(self.pomo_timer_frame, textvariable=self.pomo_chosen_sec_dig1,
-                                            state="readonly",
-                                            values=self.timer_digit1)
-        self.pomo_sec_digit1.current(int(pomo_time[3]))
-        self.pomo_sec_digit1.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.pomo_sec_digit1.grid(row=0, column=3)
-        # Second Ones Digit
-        self.pomo_chosen_sec_dig2 = tk.IntVar()
-        self.pomo_sec_digit1 = ttk.Combobox(self.pomo_timer_frame, textvariable=self.pomo_chosen_sec_dig2,
-                                            state="readonly",
-                                            values=self.timer_digit2)
-        self.pomo_sec_digit1.current(int(pomo_time[4]))
-        self.pomo_sec_digit1.bind('<<ComboboxSelected>>', self.pomo_debug_show)
-        self.pomo_sec_digit1.grid(row=0, column=4)
-        # Readjust Weight Values of Columns for Even-ness
-        self.pomo_timer_frame.grid_columnconfigure(0, weight=1)
-        self.pomo_timer_frame.grid_columnconfigure(1, weight=1)
-        # self.timer_frame.grid_columnconfigure(2, weight=1)
-        self.pomo_timer_frame.grid_columnconfigure(3, weight=1)
-        self.pomo_timer_frame.grid_columnconfigure(4, weight=1)
+        # Min Digit
+        self.chosen_pomo_min = tk.IntVar()
+        self.pomo_min = ttk.Spinbox(self.pomo_timer_frame, wrap=True, state="readonly", from_=0, to=59, increment=1,
+                                    textvariable=self.chosen_pomo_min)
+        self.pomo_min.grid(row=0, column=0)
 
-        # Long Break Timer ComboBoxes
-        # -----------------------------------------------------------------------------------------------------
-        self.lbreak_chosen_min_dig1 = tk.IntVar()
-        self.lbreak_min_digit1 = ttk.Combobox(self.lbreak_timer_frame, textvariable=self.lbreak_chosen_min_dig1,
-                                              state="readonly",
-                                              values=self.timer_digit1)
-        self.lbreak_min_digit1.current(int(lbreak_time[0]))
-        self.lbreak_min_digit1.bind('<<ComboboxSelected>>', self.lbreak_debug_show)
-        self.lbreak_min_digit1.grid(row=0, column=0)
-        # Min Ones Digit
-        self.lbreak_chosen_min_dig2 = tk.IntVar()
-        self.lbreak_min_digit2 = ttk.Combobox(self.lbreak_timer_frame, textvariable=self.lbreak_chosen_min_dig2,
-                                              state="readonly",
-                                              values=self.timer_digit2)
-        self.lbreak_min_digit2.current(int(lbreak_time[1]))
-        self.lbreak_min_digit2.bind('<<ComboboxSelected>>', self.lbreak_debug_show)
-        self.lbreak_min_digit2.grid(row=0, column=1)
         # Colon In Between
-        self.lbreak_time_colons = ttk.Label(self.lbreak_timer_frame, text=":")
-        self.lbreak_time_colons.grid(row=0, column=2)
-        # Second Tens Digit
-        self.lbreak_chosen_sec_dig1 = tk.IntVar()
-        self.lbreak_sec_digit1 = ttk.Combobox(self.lbreak_timer_frame, textvariable=self.lbreak_chosen_sec_dig1,
-                                              state="readonly",
-                                              values=self.timer_digit1)
-        self.lbreak_sec_digit1.current(int(lbreak_time[3]))
-        self.lbreak_sec_digit1.bind('<<ComboboxSelected>>', self.lbreak_debug_show)
-        self.lbreak_sec_digit1.grid(row=0, column=3)
-        # Second Ones Digit
-        self.lbreak_chosen_sec_dig2 = tk.IntVar()
-        self.lbreak_sec_digit1 = ttk.Combobox(self.lbreak_timer_frame, textvariable=self.lbreak_chosen_sec_dig2,
-                                              state="readonly",
-                                              values=self.timer_digit2)
-        self.lbreak_sec_digit1.current(int(lbreak_time[4]))
-        self.lbreak_sec_digit1.bind('<<ComboboxSelected>>', self.lbreak_debug_show)
-        self.lbreak_sec_digit1.grid(row=0, column=4)
-        # Readjust Weight Values of Columns for Even-ness
-        self.lbreak_timer_frame.grid_columnconfigure(0, weight=1)
-        self.lbreak_timer_frame.grid_columnconfigure(1, weight=1)
-        # self.timer_frame.grid_columnconfigure(2, weight=1)
-        self.lbreak_timer_frame.grid_columnconfigure(3, weight=1)
-        self.lbreak_timer_frame.grid_columnconfigure(4, weight=1)
+        self.pomo_colons = ttk.Label(self.pomo_timer_frame, text=":")
+        self.pomo_colons.grid(row=0, column=1)
+
+        # Sec Digit
+        self.chosen_pomo_sec = tk.IntVar()
+        self.pomo_sec = ttk.Spinbox(self.pomo_timer_frame, wrap=True, state="readonly", from_=0, to=59, increment=1,
+                                    textvariable=self.chosen_pomo_sec)
+        self.pomo_sec.grid(row=0, column=2)
+
+        # Long Break Timer
+        # -----------------------------------------------------------------------------------------------------
+        # Min Digit
+        self.chosen_long_min = tk.IntVar()
+        self.long_min = ttk.Spinbox(self.long_frame, wrap=True, state="readonly", from_=0, to=59, increment=1,
+                                    textvariable=self.chosen_long_min)
+        self.long_min.grid(row=0, column=0)
+
+        # Colon In Between
+        self.long_colons = ttk.Label(self.long_frame, text=":")
+        self.long_colons.grid(row=0, column=1)
+
+        # Sec Digit
+        self.chosen_long_sec = tk.IntVar()
+        self.long_sec = ttk.Spinbox(self.long_frame, wrap=True, state="readonly", from_=0, to=59, increment=1,
+                                    textvariable=self.chosen_long_sec)
+        self.long_sec.grid(row=0, column=2)
 
         # Short Break Timer ComboBoxes
         # -----------------------------------------------------------------------------------------------------
-        self.sbreak_chosen_min_dig1 = tk.IntVar()
-        self.sbreak_min_digit1 = ttk.Combobox(self.sbreak_timer_frame, textvariable=self.sbreak_chosen_min_dig1,
-                                              state="readonly",
-                                              values=self.timer_digit1)
-        self.sbreak_min_digit1.current(int(sbreak_time[0]))
-        self.sbreak_min_digit1.bind('<<ComboboxSelected>>', self.sbreak_debug_show)
-        self.sbreak_min_digit1.grid(row=0, column=0)
-        # Min Ones Digit
-        self.sbreak_chosen_min_dig2 = tk.IntVar()
-        self.sbreak_min_digit2 = ttk.Combobox(self.sbreak_timer_frame, textvariable=self.sbreak_chosen_min_dig2,
-                                              state="readonly",
-                                              values=self.timer_digit2)
-        self.sbreak_min_digit2.current(int(sbreak_time[1]))
-        self.sbreak_min_digit2.bind('<<ComboboxSelected>>', self.sbreak_debug_show)
-        self.sbreak_min_digit2.grid(row=0, column=1)
+        # Min Digit
+        self.chosen_short_min = tk.IntVar()
+        self.short_min = ttk.Spinbox(self.short_frame, wrap=True, state="readonly", from_=0, to=59, increment=1,
+                                     textvariable=self.chosen_short_min)
+        self.short_min.grid(row=0, column=0)
+
         # Colon In Between
-        self.sbreak_time_colons = ttk.Label(self.sbreak_timer_frame, text=":")
-        self.sbreak_time_colons.grid(row=0, column=2)
-        # Second Tens Digit
-        self.sbreak_chosen_sec_dig1 = tk.IntVar()
-        self.sbreak_sec_digit1 = ttk.Combobox(self.sbreak_timer_frame, textvariable=self.sbreak_chosen_sec_dig1,
-                                              state="readonly",
-                                              values=self.timer_digit1)
-        self.sbreak_sec_digit1.current(int(sbreak_time[3]))
-        self.sbreak_sec_digit1.bind('<<ComboboxSelected>>', self.sbreak_debug_show)
-        self.sbreak_sec_digit1.grid(row=0, column=3)
-        # Second Ones Digit
-        self.sbreak_chosen_sec_dig2 = tk.IntVar()
-        self.sbreak_sec_digit1 = ttk.Combobox(self.sbreak_timer_frame, textvariable=self.sbreak_chosen_sec_dig2,
-                                              state="readonly",
-                                              values=self.timer_digit2)
-        self.sbreak_sec_digit1.current(int(sbreak_time[4]))
-        self.sbreak_sec_digit1.bind('<<ComboboxSelected>>', self.sbreak_debug_show)
-        self.sbreak_sec_digit1.grid(row=0, column=4)
-        # Readjust Weight Values of Columns for Even-ness
-        self.sbreak_timer_frame.grid_columnconfigure(0, weight=1)
-        self.sbreak_timer_frame.grid_columnconfigure(1, weight=1)
-        # self.timer_frame.grid_columnconfigure(2, weight=1)
-        self.sbreak_timer_frame.grid_columnconfigure(3, weight=1)
-        self.sbreak_timer_frame.grid_columnconfigure(4, weight=1)
+        self.short_colons = ttk.Label(self.short_frame, text=":")
+        self.short_colons.grid(row=0, column=1)
+
+        # Sec Digit
+        self.chosen_short_sec = tk.IntVar()
+        self.short_min = ttk.Spinbox(self.short_frame, wrap=True, state="readonly", from_=0, to=59, increment=1,
+                                     textvariable=self.chosen_short_sec)
+        self.short_min.grid(row=0, column=2)
         # -----------------------------------------------------------------------------------------------------
 
-        self.submit_btn = ttk.Button(self.settings, text="Submit Stuff", command=self.settings_finished)
-        self.submit_btn.pack()
+        self.apply_btn = ttk.Button(self.settings, text="Apply Changes", command=self.settings_finished)
+        self.apply_btn.pack()
 
     def settings_finished(self):
-        print("[SETTINGS] Submitting New Values")
-        build_pomo_timer = str(self.pomo_chosen_min_dig1.get()) + str(self.pomo_chosen_min_dig2.get()) + ":" + \
-                           str(self.pomo_chosen_sec_dig1.get()) + str(self.pomo_chosen_sec_dig2.get())
-        build_lbreak_timer = str(self.lbreak_chosen_min_dig1.get()) + str(self.lbreak_chosen_min_dig2.get()) + ":" + \
-                             str(self.lbreak_chosen_sec_dig1.get()) + str(self.lbreak_chosen_sec_dig2.get())
-        build_sbreak_timer = str(self.sbreak_chosen_min_dig1.get()) + str(self.sbreak_chosen_min_dig2.get()) + ":" + \
-                             str(self.sbreak_chosen_sec_dig1.get()) + str(self.sbreak_chosen_sec_dig2.get())
+        built_ptimer = eval_2digs(self.chosen_pomo_min.get()) + ":" + eval_2digs(self.chosen_pomo_sec.get())
+        built_ltimer = eval_2digs(self.chosen_long_min.get()) + ":" + eval_2digs(self.chosen_long_sec.get())
+        built_stimer = eval_2digs(self.chosen_short_min.get()) + ":" + eval_2digs(self.chosen_short_sec.get())
 
-        self.apply_changes(build_pomo_timer, build_lbreak_timer, build_sbreak_timer)
-
-        print("[SETTINGS] Destroying Window...")
+        self.apply_changes(built_ptimer, built_ltimer, built_stimer)
         SettingsWindow.window_exist = False
         self.settings.destroy()
 
