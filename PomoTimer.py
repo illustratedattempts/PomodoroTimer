@@ -3,6 +3,9 @@ import tkinter as tk
 from tkinter import ttk
 from time import *
 from threading import *
+from datetime import datetime
+import os.path
+import logging
 
 from SettingWindows import SettingsWindow
 
@@ -27,6 +30,19 @@ def convertToNum(time_text):
 
 class PomoTimer:
     def __init__(self):
+        predef_path = "./Timer_Log.log"
+        curr_datetime = datetime.now().strftime("%m/%d/%Y %H:%M")
+        if not os.path.isfile(predef_path):
+            new_file = open("Timer_Log.log", mode="x", encoding="utf-8")
+            new_file.write(curr_datetime + "\n")
+            new_file.close()
+        else:
+            old_file = open("Timer_Log.log", mode="a", encoding="utf-8")
+            old_file.write(curr_datetime + "\n")
+            old_file.close()
+
+        logging.basicConfig(filename="Timer_Log.log", encoding="utf-8", level=logging.DEBUG)
+
         self.running_thread = None
         self.semp_num = Semaphore(1)  # Used to synchronize functions RUN & RESET
         self.thread_event = Event()
@@ -108,6 +124,7 @@ class PomoTimer:
     def diff_timer_pomo(self):
         if self.curr_timer_type != "Pomodoro":
             print("[CHANGE TYPE] Type changed to: Pomodoro")
+            logging.info("[CHANGE TYPE] Type changed to: Pomodoro")
             self.thread_event.clear()
 
             self.curr_timer_type = "Pomodoro"
@@ -117,10 +134,12 @@ class PomoTimer:
             self.semp_num.release()
         else:
             print("[CHANGE TYPE] Attempted to change to POMODORO but already in state")
+            logging.warning("[CHANGE TYPE] Attempted to change to POMODORO but already in state")
 
     def diff_timer_long(self):
         if self.curr_timer_type != "Long Break":
             print("[CHANGE TYPE] Type changed to: Long Break")
+            logging.info("[CHANGE TYPE] Type changed to: Long Break")
             self.thread_event.clear()
 
             self.curr_timer_type = "Long Break"
@@ -130,10 +149,12 @@ class PomoTimer:
             self.semp_num.release()
         else:
             print("[CHANGE TYPE] Attempted to change to LONG BREAK but already in state")
+            logging.warning("[CHANGE TYPE] Attempted to change to LONG BREAK but already in state")
 
     def diff_timer_short(self):
         if self.curr_timer_type != "Short Break":
             print("[CHANGE TYPE] Type changed to: Short Break")
+            logging.info("[CHANGE TYPE] Type changed to: Short Break")
             self.thread_event.clear()
 
             self.curr_timer_type = "Short Break"
@@ -143,12 +164,14 @@ class PomoTimer:
             self.semp_num.release()
         else:
             print("[CHANGE TYPE] Attempted to change to SHORT BREAK but already in state")
+            logging.info("[CHANGE TYPE] Attempted to change to SHORT BREAK but already in state")
 
     def reset_timer(self):
         self.semp_num.acquire()
         self.manip_timer(time_type=self.curr_timer_type)
 
         print("[RESET] Stopped Timer:", self.timer_num)
+        logging.info("[RESET] Stopped Timer:" + str(self.timer_num))
 
         self.semp_num.release()
         self.thread_event.clear()
@@ -158,6 +181,7 @@ class PomoTimer:
         if not self.running_thread:
             self.running_thread = Thread(target=self.update_timer, daemon=True)
             print("[RUN] Thread created! :L")
+            logging.info("[RUN] Thread created! :L")
             self.thread_event.set()  # By default, it is not set
             self.running_thread.start()
         else:
@@ -166,8 +190,10 @@ class PomoTimer:
 
             self.thread_event.set()
             print("[RUN] Letting the thread run again ;)")
+            logging.info("[RUN] Letting the thread run again ;)")
         if self.running_thread and self.thread_event.is_set():
             print("[RUN] Thread is able to run! XD")
+            logging.info("[RUN Thread is able to run! XD")
 
     def update_timer(self):
         while True:  # Assumption: The thread SHOULD continue to exist
@@ -183,19 +209,23 @@ class PomoTimer:
 
             # Addresses the case where the USER hits PAUSE just before as we are decrementing
             print("[UPDATE THREAD] Is it set?", self.thread_event.is_set())
+            logging.info("[UPDATE THREAD] Is it set?" + str(self.thread_event.is_set()))
             if not self.thread_event.is_set():  # To force another 1 sec delay after RUNNING again
+                # Created to enforce at the moment changes
                 print("[UPDATE THREAD] System detected a pause right before decrementing")
-                print("[UPDATE THREAD] Forcing an additional 1 sec delay (if applicable)")
+                logging.info("[UPDATE THREAD] System detected a pause right before decrementing")
                 self.semp_num.release()  # Emulates end of loop
                 continue
 
             self.timer_num -= 1
 
             print("[UPDATE THREAD] Running Timer:", self.timer_num)
+            logging.info("[UPDATE THREAD] Running Timer:" + str(self.timer_num))
             self.timer.config(text=convertToTime(self.timer_num))
 
             if self.timer_num <= 0:
                 print("[UPDATE THREAD] Timer has reached the end")
+                logging.info("[UPDATE THREAD] Timer has reached the end")
                 self.thread_event.clear()
 
             self.semp_num.release()
@@ -203,18 +233,22 @@ class PomoTimer:
     def pause_timer(self):
         self.thread_event.clear()
         print("[PAUSE] Call for pause! :#")
+        logging.info("[PAUSE] Call for pause! :#")
 
     # Settings Window Below:
     def open_settings(self):
         print("[SETTINGS] Invoking Window Opening")
+        logging.info("[SETTINGS] Invoking Window Opening")
         # Just in case the modal focus mode fails
         if not SettingsWindow.window_exist:
             self.settings_window = SettingsWindow(pomo_time=self.pomo_time, lbreak_time=self.lbreak_time,
                                                   sbreak_time=self.sbreak_time, change_func=self.invoke_changes)
 
             print("[SETTINGS] New Window Opened")
+            logging.info("[SETTINGS] New Window Opened")
         else:
             print("[SETTINGS] Window Already Exists, Only One Window May Exist")
+            logging.info("[SETTINGS] Window Already Exists, Only One Window May Exist")
 
     # For the Settings' Window
     # For now assume that the timer is NOT running
@@ -222,6 +256,7 @@ class PomoTimer:
         # self.default_time = new_time
         # self.timer_num = convertToNum(new_time)
         print("[SETTINGS -> MAIN] Timer Settings has Invoked Changes to Timer Types Values")
+        logging.info("[SETTINGS -> MAIN] Timer Settings has Invoked Changes to Timer Types Values")
         self.pomo_time = new_pomo_timer
         self.lbreak_time = new_lbreak_timer
         self.sbreak_time = new_sbreak_timer
